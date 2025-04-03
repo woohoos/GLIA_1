@@ -8,9 +8,9 @@ rule all:
     input:
         expand("results/counts/counts_{sample}.tsv", sample=SAMPLES)
 
-########################################
+
 # Step 1: FastQC on raw reads
-########################################
+
 rule fastqc_raw:
     input:
         R1="data/raw/{sample}_1.fastq.gz",
@@ -21,9 +21,9 @@ rule fastqc_raw:
     shell:
         "fastqc {input.R1} {input.R2} --outdir=results/fastqc"
 
-########################################
+
 # Step 2: Trim reads using Cutadapt
-########################################
+
 rule trim:
     input:
         R1="data/raw/{sample}_1.fastq.gz",
@@ -50,9 +50,9 @@ rule trim:
           > results/trimmed/{wildcards.sample}_cutadapt_report.txt
         """
 
-########################################
+
 # Step 3: FastQC on trimmed reads
-########################################
+
 rule fastqc_trimmed:
     input:
         R1="results/trimmed/{sample}_1.trimmed.fastq.gz",
@@ -63,9 +63,9 @@ rule fastqc_trimmed:
     shell:
         "fastqc {input.R1} {input.R2} --outdir=results/fastqc_trimmed"
 
-########################################
+
 # Step 4: Build STAR genome index
-########################################
+
 rule star_index:
     input:
         fasta="data/reference/reference.fasta",
@@ -86,9 +86,9 @@ rule star_index:
              --sjdbOverhang 99
         """
 
-########################################
+
 # Step 5: STAR alignment (map trimmed reads)
-########################################
+
 rule star_align:
     input:
         index="data/reference/star_index",
@@ -109,9 +109,9 @@ rule star_align:
              --outSAMtype BAM SortedByCoordinate
         """
 
-########################################
+
 # Step 6: Quantify gene expression with featureCounts
-########################################
+
 rule featurecounts:
     input:
         bam="results/mapping/{sample}_Aligned.sortedByCoord.out.bam",
