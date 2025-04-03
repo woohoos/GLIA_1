@@ -1,0 +1,8 @@
+	STAR --runThreadN 4 --genomeDir /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index --readFilesIn results/trimmed/SRR20278120_1.trimmed.fastq.gz results/trimmed/SRR20278120_2.trimmed.fastq.gz --readFilesCommand zcat --outFileNamePrefix results/mapping/SRR20278120_ --outSAMtype BAM SortedByCoordinate
+	STAR version: 2.7.10b   compiled: 2022-11-01T09:53:26-04:00 :/home/dobin/data/STAR/STARcode/STAR.master/source
+Apr 03 18:42:31 ..... started STAR run
+Apr 03 18:42:31 ..... loading genome
+Apr 03 18:43:00 ..... started mapping
+Apr 03 18:43:02 ..... finished mapping
+Apr 03 18:43:03 ..... started sorting BAM
+Apr 03 18:43:04 ..... finished successfully

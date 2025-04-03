@@ -1,0 +1,16 @@
+	STAR --runThreadN 4 --runMode genomeGenerate --genomeDir /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index --genomeFastaFiles /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/reference.fasta --sjdbGTFfile /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/reference.gtf --sjdbOverhang 99
+	STAR version: 2.7.10b   compiled: 2022-11-01T09:53:26-04:00 :/home/dobin/data/STAR/STARcode/STAR.master/source
+Apr 03 17:58:39 ..... started STAR run
+Apr 03 17:58:39 ... starting to generate Genome files
+Apr 03 17:59:19 ..... processing annotations GTF
+Apr 03 17:59:40 ... starting to sort Suffix Array. This may take a long time...
+Apr 03 17:59:52 ... sorting Suffix Array chunks and saving them to disk...
+Apr 03 18:23:16 ... loading chunks from disk, packing SA...
+Apr 03 18:24:32 ... finished generating suffix array
+Apr 03 18:24:32 ... generating Suffix Array index
+Apr 03 18:28:22 ... completed Suffix Array index
+Apr 03 18:28:23 ..... inserting junctions into the genome indices
+Apr 03 18:32:51 ... writing Genome to disk ...
+Apr 03 18:32:54 ... writing Suffix Array to disk ...
+Apr 03 18:33:15 ... writing SAindex to disk
+Apr 03 18:33:18 ..... finished successfully

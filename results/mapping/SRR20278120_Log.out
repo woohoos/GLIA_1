@@ -1,0 +1,225 @@
+STAR version=2.7.10b
+STAR compilation time,server,dir=2022-11-01T09:53:26-04:00 :/home/dobin/data/STAR/STARcode/STAR.master/source
+STAR git: On branch master ; commit c6f8efc2c7043ef83bf8b0d9bed36bbb6b9b1133 ; diff files: CHANGES.md 
+##### Command Line:
+STAR --runThreadN 4 --genomeDir /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index --readFilesIn results/trimmed/SRR20278120_1.trimmed.fastq.gz results/trimmed/SRR20278120_2.trimmed.fastq.gz --readFilesCommand zcat --outFileNamePrefix results/mapping/SRR20278120_ --outSAMtype BAM SortedByCoordinate
+##### Initial USER parameters from Command Line:
+outFileNamePrefix                 results/mapping/SRR20278120_
+###### All USER parameters from Command Line:
+runThreadN                    4     ~RE-DEFINED
+genomeDir                     /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index     ~RE-DEFINED
+readFilesIn                   results/trimmed/SRR20278120_1.trimmed.fastq.gz   results/trimmed/SRR20278120_2.trimmed.fastq.gz        ~RE-DEFINED
+readFilesCommand              zcat        ~RE-DEFINED
+outFileNamePrefix             results/mapping/SRR20278120_     ~RE-DEFINED
+outSAMtype                    BAM   SortedByCoordinate        ~RE-DEFINED
+##### Finished reading parameters from all sources
+
+##### Final user re-defined parameters-----------------:
+runThreadN                        4
+genomeDir                         /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index
+readFilesIn                       results/trimmed/SRR20278120_1.trimmed.fastq.gz   results/trimmed/SRR20278120_2.trimmed.fastq.gz   
+readFilesCommand                  zcat   
+outFileNamePrefix                 results/mapping/SRR20278120_
+outSAMtype                        BAM   SortedByCoordinate   
+
+-------------------------------
+##### Final effective command line:
+STAR   --runThreadN 4   --genomeDir /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index   --readFilesIn results/trimmed/SRR20278120_1.trimmed.fastq.gz   results/trimmed/SRR20278120_2.trimmed.fastq.gz      --readFilesCommand zcat      --outFileNamePrefix results/mapping/SRR20278120_   --outSAMtype BAM   SortedByCoordinate   
+----------------------------------------
+
+Number of fastq files for each mate = 1
+
+   Input read files for mate 1 :
+-rw-r--r-- 1 davo9950 davo9950_ 1831599 Apr  3 13:28 results/trimmed/SRR20278120_1.trimmed.fastq.gz
+
+   readsCommandsFile:
+exec > "results/mapping/SRR20278120__STARtmp/tmp.fifo.read1"
+echo FILE 0
+zcat      "results/trimmed/SRR20278120_1.trimmed.fastq.gz"
+
+
+   Input read files for mate 2 :
+-rw-r--r-- 1 davo9950 davo9950_ 1881241 Apr  3 13:28 results/trimmed/SRR20278120_2.trimmed.fastq.gz
+
+   readsCommandsFile:
+exec > "results/mapping/SRR20278120__STARtmp/tmp.fifo.read2"
+echo FILE 0
+zcat      "results/trimmed/SRR20278120_2.trimmed.fastq.gz"
+
+ParametersSolo: --soloCellFilterType CellRanger2.2 filtering parameters:  3000 0.99 10
+WARNING: --limitBAMsortRAM=0, will use genome size as RAM limit for BAM sorting
+Finished loading and checking parameters
+Reading genome generation parameters:
+### STAR   --runMode genomeGenerate      --runThreadN 4   --genomeDir /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/star_index   --genomeFastaFiles /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/reference.fasta      --sjdbGTFfile /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/reference.gtf   --sjdbOverhang 99
+### GstrandBit=32
+versionGenome                 2.7.4a     ~RE-DEFINED
+genomeType                    Full     ~RE-DEFINED
+genomeFastaFiles              /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/reference.fasta        ~RE-DEFINED
+genomeSAindexNbases           14     ~RE-DEFINED
+genomeChrBinNbits             18     ~RE-DEFINED
+genomeSAsparseD               1     ~RE-DEFINED
+genomeTransformType           None     ~RE-DEFINED
+genomeTransformVCF            -     ~RE-DEFINED
+sjdbOverhang                  99     ~RE-DEFINED
+sjdbFileChrStartEnd           -        ~RE-DEFINED
+sjdbGTFfile                   /scratch/lustre/home/davo9950/rna-seq-pipeline/data/reference/reference.gtf     ~RE-DEFINED
+sjdbGTFchrPrefix              -     ~RE-DEFINED
+sjdbGTFfeatureExon            exon     ~RE-DEFINED
+sjdbGTFtagExonParentTranscripttranscript_id     ~RE-DEFINED
+sjdbGTFtagExonParentGene      gene_id     ~RE-DEFINED
+sjdbInsertSave                Basic     ~RE-DEFINED
+genomeFileSizes               2796036573   22374101157        ~RE-DEFINED
+Genome version is compatible with current STAR
+Number of real (reference) chromosomes= 61
+1	chr1	195154279	0
+2	chr2	181755017	195297280
+3	chr3	159745316	377225216
+4	chr4	156860686	537133056
+5	chr5	151758149	694157312
+6	chr6	149588044	845938688
+7	chr7	144995196	995622912
+8	chr8	130127694	1140850688
+9	chr9	124359700	1271136256
+10	chr10	130530862	1395654656
+11	chr11	121973369	1526202368
+12	chr12	120092757	1648361472
+13	chr13	120883175	1768685568
+14	chr14	125139656	1889796096
+15	chr15	104073951	2015100928
+16	chr16	98008968	2119434240
+17	chr17	95294699	2217476096
+18	chr18	90720763	2312896512
+19	chr19	61420004	2403860480
+20	chrX	169476592	2465464320
+21	chrY	91455967	2635071488
+22	chrM	16299	2726559744
+23	GL456210.1	169725	2726821888
+24	GL456211.1	241735	2727084032
+25	GL456212.1	153618	2727346176
+26	GL456219.1	175968	2727608320
+27	GL456221.1	206961	2727870464
+28	GL456233.2	559103	2728132608
+29	GL456239.1	40056	2728919040
+30	GL456354.1	195993	2729181184
+31	GL456359.1	22974	2729443328
+32	GL456360.1	31704	2729705472
+33	GL456366.1	47073	2729967616
+34	GL456367.1	42057	2730229760
+35	GL456368.1	20208	2730491904
+36	GL456370.1	26764	2730754048
+37	GL456372.1	28664	2731016192
+38	GL456378.1	31602	2731278336
+39	GL456379.1	72385	2731540480
+40	GL456381.1	25871	2731802624
+41	GL456382.1	23158	2732064768
+42	GL456383.1	38659	2732326912
+43	GL456385.1	35240	2732589056
+44	GL456387.1	24685	2732851200
+45	GL456389.1	28772	2733113344
+46	GL456390.1	24668	2733375488
+47	GL456392.1	23629	2733637632
+48	GL456394.1	24323	2733899776
+49	GL456396.1	21240	2734161920
+50	JH584295.1	1976	2734424064
+51	JH584296.1	199368	2734686208
+52	JH584297.1	205776	2734948352
+53	JH584298.1	184189	2735210496
+54	JH584299.1	953012	2735472640
+55	JH584300.1	182347	2736521216
+56	JH584301.1	259875	2736783360
+57	JH584302.1	155838	2737045504
+58	JH584303.1	158099	2737307648
+59	JH584304.1	114452	2737569792
+60	MU069434.1	8412	2737831936
+61	MU069435.1	31129	2738094080
+--sjdbOverhang = 99 taken from the generated genome
+Started loading the genome: Thu Apr  3 18:42:31 2025
+
+Genome: size given as a parameter = 2796036573
+SA: size given as a parameter = 22374101157
+SAindex: size given as a parameter = 1
+Read from SAindex: pGe.gSAindexNbases=14  nSAi=357913940
+nGenome=2796036573;  nSAbyte=22374101157
+GstrandBit=32   SA number of indices=5424024522
+Shared memory is not used for genomes. Allocated a private copy of the genome.
+Genome file size: 2796036573 bytes; state: good=1 eof=0 fail=0 bad=0
+Loading Genome ... done! state: good=1 eof=0 fail=0 bad=0; loaded 2796036573 bytes
+SA file size: 22374101157 bytes; state: good=1 eof=0 fail=0 bad=0
+Loading SA ... done! state: good=1 eof=0 fail=0 bad=0; loaded 22374101157 bytes
+Loading SAindex ... done: 1565873619 bytes
+Finished loading the genome: Thu Apr  3 18:43:00 2025
+
+Processing splice junctions database sjdbN=289851,   pGe.sjdbOverhang=99 
+alignIntronMax=alignMatesGapMax=0, the max intron size will be approximately determined by (2^winBinNbits)*winAnchorDistNbins=589824
+Created thread # 1
+Created thread # 2
+Created thread # 3
+Starting to map file # 0
+mate 1:   results/trimmed/SRR20278120_1.trimmed.fastq.gz
+mate 2:   results/trimmed/SRR20278120_2.trimmed.fastq.gz
+Thread #1 end of input stream, nextChar=-1
+Completed: thread #2
+Completed: thread #0
+Completed: thread #3
+BAM sorting: 76424 mapped reads
+BAM sorting bins genomic start loci:
+1	0	48676107
+2	0	104610020
+3	0	164024631
+4	1	22479227
+5	1	70221774
+6	1	124836553
+7	1	180117472
+8	2	67379103
+9	2	123067928
+10	3	29186638
+11	3	81993048
+12	3	131795288
+13	4	18832049
+14	4	72965421
+15	4	127979956
+16	5	38544091
+17	5	93893651
+18	6	4575483
+19	6	43126842
+20	6	98588273
+21	7	3928555
+22	7	54553691
+23	7	114674226
+24	8	42041506
+25	8	97519912
+26	9	29852502
+27	9	89254915
+28	10	20202862
+29	10	72293367
+30	10	119989611
+31	11	47334251
+32	11	105429527
+33	12	41821666
+34	12	93763305
+35	13	27497484
+36	13	80047651
+37	14	25406192
+38	14	83233711
+39	15	31012259
+40	16	3674408
+41	16	51300809
+42	17	17447773
+43	17	78601435
+44	18	49487719
+45	19	37462678
+46	19	101049228
+47	19	160007196
+48	21	10868
+Completed: thread #1
+Joined thread # 1
+Joined thread # 2
+Joined thread # 3
+Apr 03 18:43:02 ..... finished mapping
+RAM after mapping:
+VmPeak:	26937576 kB; VmSize:	26872040 kB; VmHWM:	26554120 kB; VmRSS:	26542780 kB; 
+RAM after freeing genome index memory:
+VmPeak:	26937576 kB; VmSize:	  762644 kB; VmHWM:	26554120 kB; VmRSS:	  433548 kB; 
+Apr 03 18:43:03 ..... started sorting BAM
+Max memory needed for sorting = 291468
+ALL DONE!

@@ -1,0 +1,128 @@
+# workflow/Snakefile
+
+# Automatically gather sample names from raw FASTQ files.
+# Expects files: data/raw/<sample>_1.fastq.gz and data/raw/<sample>_2.fastq.gz
+SAMPLES, = glob_wildcards("data/raw/{sample}_1.fastq.gz")
+
+rule all:
+    input:
+        expand("results/counts/counts_{sample}.tsv", sample=SAMPLES)
+
+########################################
+# Step 1: FastQC on raw reads
+########################################
+rule fastqc_raw:
+    input:
+        R1="data/raw/{sample}_1.fastq.gz",
+        R2="data/raw/{sample}_2.fastq.gz"
+    output:
+        R1_html="results/fastqc/{sample}_1_fastqc.html",
+        R2_html="results/fastqc/{sample}_2_fastqc.html"
+    shell:
+        "fastqc {input.R1} {input.R2} --outdir=results/fastqc"
+
+########################################
+# Step 2: Trim reads using Cutadapt
+########################################
+rule trim:
+    input:
+        R1="data/raw/{sample}_1.fastq.gz",
+        R2="data/raw/{sample}_2.fastq.gz"
+    output:
+        R1_trim="results/trimmed/{sample}_1.trimmed.fastq.gz",
+        R1_untrim="results/trimmed/{sample}_1.untrimmed.fastq.gz",
+        R2_trim="results/trimmed/{sample}_2.trimmed.fastq.gz",
+        R2_untrim="results/trimmed/{sample}_2.untrimmed.fastq.gz"
+    params:
+        adapters="adapters.fa"
+    conda:
+        "../envs/cutadapt_env.yaml"
+    shell:
+        """
+        cutadapt -j 4 \
+          -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA \
+          -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT \
+          -o {output.R1_trim} \
+          -p {output.R2_trim} \
+          --untrimmed-output {output.R1_untrim} \
+          --untrimmed-paired-output {output.R2_untrim} \
+          {input.R1} {input.R2} \
+          > results/trimmed/{wildcards.sample}_cutadapt_report.txt
+        """
+
+########################################
+# Step 3: FastQC on trimmed reads
+########################################
+rule fastqc_trimmed:
+    input:
+        R1="results/trimmed/{sample}_1.trimmed.fastq.gz",
+        R2="results/trimmed/{sample}_2.trimmed.fastq.gz"
+    output:
+        R1_html="results/fastqc_trimmed/{sample}_1_fastqc.html",
+        R2_html="results/fastqc_trimmed/{sample}_2_fastqc.html"
+    shell:
+        "fastqc {input.R1} {input.R2} --outdir=results/fastqc_trimmed"
+
+########################################
+# Step 4: Build STAR genome index
+########################################
+rule star_index:
+    input:
+        fasta="data/reference/reference.fasta",
+        gtf="data/reference/reference.gtf"
+    output:
+        directory("data/reference/star_index")
+    threads: 8
+    resources:
+        mem_mb=64000
+    conda:
+        "../envs/star_env.yaml"
+    shell:
+        """
+        STAR --runThreadN {threads} --runMode genomeGenerate \
+             --genomeDir {output} \
+             --genomeFastaFiles {input.fasta} \
+             --sjdbGTFfile {input.gtf} \
+             --sjdbOverhang 99
+        """
+
+########################################
+# Step 5: STAR alignment (map trimmed reads)
+########################################
+rule star_align:
+    input:
+        index="data/reference/star_index",
+        R1="results/trimmed/{sample}_1.trimmed.fastq.gz",
+        R2="results/trimmed/{sample}_2.trimmed.fastq.gz"
+    output:
+        "results/mapping/{sample}_Aligned.sortedByCoord.out.bam"
+    threads: 4
+    resources:
+        mem_mb=32000
+    conda:
+        "../envs/star_env.yaml"
+    shell:
+        """
+        STAR --runThreadN {threads} --genomeDir {input.index} \
+             --readFilesIn {input.R1} {input.R2} --readFilesCommand zcat \
+             --outFileNamePrefix results/mapping/{wildcards.sample}_ \
+             --outSAMtype BAM SortedByCoordinate
+        """
+
+########################################
+# Step 6: Quantify gene expression with featureCounts
+########################################
+rule featurecounts:
+    input:
+        bam="results/mapping/{sample}_Aligned.sortedByCoord.out.bam",
+        gtf="data/reference/reference.gtf"
+    output:
+        counts="results/counts/counts_{sample}.tsv",
+        summary="results/counts/counts_{sample}.tsv.summary"
+    threads: 4
+    conda:
+        "../envs/subread_env.yaml"
+    shell:
+        """
+        featureCounts -T {threads} -p -a {input.gtf} -o {output.counts} {input.bam}
+        """
