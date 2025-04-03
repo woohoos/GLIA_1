@@ -13,7 +13,7 @@ start working on snakemake
 <<<<<<< HEAD
 Your local README content
 =======
-Remote README content
+README 
 >>>>>>> origin/main
 ø
 
