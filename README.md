@@ -1,42 +1,24 @@
-<<<<<<< HEAD
-# rna-seq-pipeline
-=======
-TODO:
+# RNA-seq Pipeline (GLIA_1)
 
-get directory structure done
-
-download files
-
-start working on snakemake
->>>>>>> 79daf331c7fec23fc500efdf0ca63e471594ec9c
-
-<<<<<<< HEAD
-Your local README content
-=======
-Remote README content
->>>>>>> origin/main
-ø
-# 🧬 RNA-seq Pipeline (GLIA_1)
-
-This repository contains a reproducible RNA-seq analysis pipeline developed using [Snakemake](https://snakemake.readthedocs.io), [Conda](https://docs.conda.io), and SLURM HPC scheduler. It includes raw data processing, trimming, alignment, and read counting.
+This repository contains a reproducible RNA-seq analysis pipeline developed using [Snakemake](https://snakemake.readthedocs.io), [Conda](https://docs.conda.io), and SLURM HPC resources.
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
-rna-seq-pipeline/ ├── config/ # Configuration files ├── workflow/ # Snakemake rules ├── data/ │ ├── raw/ # Raw FASTQ files │ └── reference/ # Genome + GTF ├── results/ │ ├── trimmed/ # Cutadapt outputs │ ├── fastqc_trimmed/ # FastQC for trimmed files │ ├── mapping/ # STAR aligned BAMs │ └── counts/ # Gene counts (featureCounts) ├── logs/ # SLURM logs ├── job_star_index.sh # SLURM script for STAR genome index ├── job_star_align_SRR20278120.sh # SLURM script for STAR alignment └── README.md # This file
+rna-seq-pipeline/ ├── config/ # Configuration files ├── workflow/ # Snakemake rules ├── data/ │ ├── raw/ # Raw FASTQ files │ └── reference/ # Genome FASTA, GTF, STAR index ├── results/ │ ├── trimmed/ # Trimmed FASTQs │ ├── mapping/ # STAR BAM files │ ├── counts/ # featureCounts outputs │ ├── fastqc/ # Pre-trimming FastQC reports │ └── fastqc_trimmed/ # Post-trimming FastQC reports ├── logs/ # SLURM job logs └── Snakefile # Main Snakemake workflow
 
 
 ---
 
-## 🧪 Conda Environments
+## Conda Environments
 
 ```bash
 conda create -n cutadapt_env cutadapt
 conda create -n fastqc_env fastqc
 conda create -n star_env star
 conda install -n star_env -c bioconda subread  # for featureCounts
-✂️ Trimming (Cutadapt)
+Trimming (Cutadapt)
 
 cutadapt -j 4 \
   -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA \
@@ -45,10 +27,11 @@ cutadapt -j 4 \
   -p results/trimmed/SRR20278120_2.trimmed.fastq.gz \
   data/raw/SRR20278120_1.fastq.gz data/raw/SRR20278120_2.fastq.gz \
   > results/trimmed/cutadapt_report.txt
-📈 Quality Check (FastQC)
+Quality Check (FastQC)
 
+fastqc data/raw/*.fastq.gz -o results/fastqc
 fastqc results/trimmed/*.fastq.gz -o results/fastqc_trimmed
-📥 Reference Genome
+Reference Genome
 
 cd data/reference
 
@@ -61,10 +44,10 @@ mv GRCm39.primary_assembly.genome.fa reference.fasta
 wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M32/gencode.vM32.annotation.gtf.gz
 gunzip gencode.vM32.annotation.gtf.gz
 mv gencode.vM32.annotation.gtf reference.gtf
-🧬 STAR Genome Index (via SLURM)
+STAR Genome Index (via SLURM)
 
 sbatch job_star_index.sh
-Or manually:
+Or run manually:
 
 STAR --runThreadN 4 \
   --runMode genomeGenerate \
@@ -72,10 +55,10 @@ STAR --runThreadN 4 \
   --genomeFastaFiles data/reference/reference.fasta \
   --sjdbGTFfile data/reference/reference.gtf \
   --sjdbOverhang 99
-🧪 STAR Alignment (via SLURM)
+STAR Alignment (via SLURM)
 
 sbatch job_star_align_SRR20278120.sh
-Or manually:
+Or run manually:
 
 STAR --runThreadN 4 \
   --genomeDir data/reference/star_index \
@@ -83,14 +66,16 @@ STAR --runThreadN 4 \
   --readFilesCommand zcat \
   --outFileNamePrefix results/mapping/SRR20278120_ \
   --outSAMtype BAM SortedByCoordinate
-🧮 Gene Counts (featureCounts)
+Gene Counts (featureCounts)
 
 featureCounts -T 4 -p \
   -a data/reference/reference.gtf \
   -o results/counts/counts_SRR20278120.tsv \
   results/mapping/SRR20278120_Aligned.sortedByCoord.out.bam
-🔁 Reproducibility
+⚠️ Note: This dataset appears to be ATAC-seq rather than RNA-seq. Therefore, featureCounts may assign very few reads if used with RNA-seq annotations.
 
-Use Snakemake to re-run all steps:
+Reproducibility
+
+Use Snakemake to re-run everything in one go:
 
 snakemake --cores 8 --use-conda --rerun-incomplete

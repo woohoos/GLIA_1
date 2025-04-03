@@ -1,7 +1,5 @@
-# Ignore raw FASTQ files
+
 data/raw/*.fastq.gz
 
-# Ignore big result files
 results/*
 
-# Or anything else you don't want to push

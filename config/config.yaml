@@ -1,3 +1,4 @@
+ HEAD
 samples:
   SRR20278120:
     r1: data/raw/SRR20278120_1.fastq.gz
@@ -8,3 +9,15 @@ params:
   adapter_r1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
   adapter_r2: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
   overhang: 99
+
+samples:
+  SRR20278120:
+    r1: data/raw/SRR20278120_1.fastq.gz
+    r2: data/raw/SRR20278120_2.fastq.gz
+
+params:
+  threads: 4
+  adapter_r1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
+  adapter_r2: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+  overhang: 99
+ 4011804f628cd16930fa8b97708c1fc3674f9537
