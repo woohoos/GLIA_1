@@ -1,0 +1,146 @@
+
+########################################
+# Define samples
+########################################
+SAMPLES = ["SRX16311682", "SRX16311683", "SRX16311690", "SRX16311691"]
+
+rule all:
+    input:
+        expand("results/peaks/{sample}_peaks.narrowPeak", sample=SAMPLES),
+        expand("results/featurecounts/{sample}_featureCounts.txt", sample=SAMPLES)
+
+########################################
+# Step 1: FastQC on raw reads
+########################################
+rule fastqc_raw:
+    input:
+        R1="data/raw/{sample}_1.fastq.gz",
+        R2="data/raw/{sample}_2.fastq.gz"
+    output:
+        done="results/fastqc/{sample}_fastqc_raw.done"
+    shell:
+        """
+        mkdir -p results/fastqc
+        fastqc {input.R1} {input.R2} --outdir=results/fastqc
+        touch {output.done}
+        """
+
+########################################
+# Step 2: Trim reads using Trim Galore
+########################################
+rule trim:
+    input:
+        R1="data/raw/{sample}_1.fastq.gz",
+        R2="data/raw/{sample}_2.fastq.gz"
+    output:
+        R1_trim="results/trimmed/{sample}_1.trimmed.fastq.gz",
+        R2_trim="results/trimmed/{sample}_2.trimmed.fastq.gz",
+        done="results/trimmed/{sample}_trim.done"
+    conda:
+        "../envs/trim_galore_env.yaml"  
+    shell:
+        """
+        mkdir -p results/trimmed
+        trim_galore --cores 10 --paired \
+            -o results/trimmed \
+            {input.R1} {input.R2} \
+            > results/trimmed/{wildcards.sample}_trim_galore_report.txt
+
+        mv results/trimmed/{wildcards.sample}_1_val_1.fq.gz {output.R1_trim}
+        mv results/trimmed/{wildcards.sample}_2_val_2.fq.gz {output.R2_trim}
+
+        touch {output.done}
+        """
+
+########################################
+# Step 3: FastQC on trimmed reads
+########################################
+rule fastqc_trimmed:
+    input:
+        R1="results/trimmed/{sample}_1.trimmed.fastq.gz",
+        R2="results/trimmed/{sample}_2.trimmed.fastq.gz"
+    output:
+        done="results/fastqc_trimmed/{sample}_fastqc_trimmed.done"
+    shell:
+        """
+        mkdir -p results/fastqc_trimmed
+        fastqc {input.R1} {input.R2} --outdir=results/fastqc_trimmed
+        touch {output.done}
+        """
+
+########################################
+# Step 4: Build HISAT2 genome index
+########################################
+rule build_hisat2_index:
+    input:
+        fasta="data/reference/reference.fasta"
+    output:
+        index_files=expand("data/reference/hisat2_index/genome.{ext}.ht2",
+                           ext=["1","2","3","4","5","6"]),
+        done="data/reference/hisat2_index/index_build.done"
+    threads: 4
+    conda:
+        "../envs/hisat2_env.yaml"
+    shell:
+        """
+        mkdir -p data/reference/hisat2_index
+        hisat2-build -p {threads} {input.fasta} data/reference/hisat2_index/genome
+        touch {output.done}
+        """
+
+########################################
+# Step 5: Align trimmed reads with HISAT2
+########################################
+rule align:
+    input:
+        index_done="data/reference/hisat2_index/index_build.done",
+        R1="results/trimmed/{sample}_1.trimmed.fastq.gz",
+        R2="results/trimmed/{sample}_2.trimmed.fastq.gz"
+    output:
+        bam="results/mapping/{sample}.bam"
+    threads: 10
+    conda:
+        "../envs/hisat2_env.yaml"
+    shell:
+         """
+        mkdir -p results/mapping
+        hisat2 -p {threads} -x data/reference/hisat2_index/genome \
+            -1 {input.R1} -2 {input.R2} \
+            | samtools view -bS - \
+            | samtools sort -n -o {output.bam}
+        """
+
+########################################
+# Step 6: Peak Calling with Genrich
+########################################
+rule peak_calling:
+    input:
+        bam="results/mapping/{sample}.bam"
+    output:
+        peaks="results/peaks/{sample}_peaks.narrowPeak"
+    threads: 10
+    conda:
+        "../envs/genrich_env.yaml"
+    shell:
+        """
+        mkdir -p results/peaks
+        Genrich -t {input.bam} -o {output.peaks} -j -y -v
+        """
+
+########################################
+# Step 7: Feature Counting with featureCounts
+########################################
+rule feature_counts:
+    input:
+        bam="results/mapping/{sample}.bam",
+        annotation="data/annotation/union_peaks.saf"
+    output:
+        counts="results/featurecounts/{sample}_featureCounts.txt"
+    threads: 4
+    conda:
+        "../envs/featurecounts_env.yaml"
+    shell:
+        """
+        mkdir -p results/featurecounts
+        featureCounts -T {threads} -p -a {input.annotation} -F SAF -o {output.counts} {input.bam}
+        """
