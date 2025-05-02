@@ -1,0 +1,142 @@
+# workflow/Snakefile
+configfile: "config/config.yaml"
+
+rule all:
+    input:
+        expand("results/rna/featurecounts/{sample}.counts.txt", sample=config["samples"]),
+        "results/rna/multiqc/multiqc_report.html"
+
+##########################
+# Rule 1: FastQC on Raw Reads
+##########################
+rule fastqc_raw:
+    input:
+        "rna/{sample}.fastq.gz"  # Updated path
+    output:
+        html="results/rna/fastqc/{sample}_fastqc.html",
+        zip="results/rna/fastqc/{sample}_fastqc.zip"
+    threads: 4
+    conda:
+        "../envs/fastqc_env.yaml"
+    log: "logs/rna/fastqc/{sample}.log"
+    shell:
+        "fastqc -t {threads} {input} --outdir results/rna/fastqc/ > {log} 2>&1"
+
+##########################
+# Rule 2: Adapter Trimming
+##########################
+rule trim_adapters:
+    input:
+        "rna/{sample}.fastq.gz"  # Updated path
+    output:
+        "results/rna/trimmed/{sample}.trimmed.fastq.gz"
+    params:
+        adapter="AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"  # TruSeq adapter
+    threads: 4
+    conda:
+        "../envs/cutadapt_env.yaml"
+    log: "logs/rna/cutadapt/{sample}.log"
+    shell:
+        """
+        cutadapt -j {threads} \
+            -a {params.adapter} \
+            -m 20 -q 20 \
+            -o {output} {input} > {log} 2>&1
+        """
+
+##########################
+# Rule 3: FastQC on Trimmed
+##########################
+rule fastqc_trimmed:
+    input:
+        "results/rna/trimmed/{sample}.trimmed.fastq.gz"
+    output:
+        html="results/rna/fastqc_trimmed/{sample}.trimmed_fastqc.html",
+        zip="results/rna/fastqc_trimmed/{sample}.trimmed_fastqc.zip"
+    threads: 4
+    conda:
+        "../envs/fastqc_env.yaml"
+    log: "logs/rna/fastqc_trimmed/{sample}.log"
+    shell:
+        "fastqc -t {threads} {input} --outdir results/rna/fastqc_trimmed/ > {log} 2>&1"
+
+##########################
+# Rule 4: HISAT2 Alignment
+##########################
+rule align_hisat2:
+    input:
+        "results/rna/trimmed/{sample}.trimmed.fastq.gz"
+    output:
+        sam="results/rna/mapping/{sample}.sam",
+        summary="results/rna/mapping/{sample}.summary.txt"
+    params:
+        index=config["reference"]["hisat2_index"]
+    threads: 4
+    conda:
+        "../envs/hisat2_env.yaml"
+    log: "logs/rna/hisat2/{sample}.log"
+    shell:
+        """
+        hisat2 -p {threads} \
+            -x {params.index} \
+            -U {input} \
+            --new-summary \
+            --summary-file {output.summary} \
+            -S {output.sam} 2> {log}
+        """
+
+##########################
+# Rule 5: SAM to BAM
+##########################
+rule sam_to_bam:
+    input:
+        "results/rna/mapping/{sample}.sam"
+    output:
+        "results/rna/mapping/{sample}.sorted.bam"
+    threads: 4
+    conda:
+        "../envs/hisat2_env.yaml"
+    log: "logs/rna/sam_to_bam/{sample}.log"
+    shell:
+        "samtools sort -@ {threads} -o {output} {input} > {log} 2>&1"
+
+##########################
+# Rule 6: FeatureCounts
+##########################
+rule quantify_featurecounts:
+    input:
+        bam="results/rna/mapping/{sample}.sorted.bam",
+        annotation=config["reference"]["gtf"]
+    output:
+        counts="results/rna/featurecounts/{sample}.counts.txt"
+    threads: 4
+    conda:
+        "../envs/hisat2_env.yaml"
+    log: "logs/rna/featurecounts/{sample}.log"
+    shell:
+        """
+        featureCounts -T {threads} \
+            -s 0 \
+            -t exon \
+            -g gene_id \
+            -a {input.annotation} \
+            -o {output} {input.bam} > {log} 2>&1
+        """
+
+##########################
+# Rule 7: MultiQC Report
+##########################
+rule multiqc:
+    input:
+        fastqc_raw=expand("results/rna/fastqc/{sample}_fastqc.zip", sample=config["samples"]),
+        fastqc_trimmed=expand("results/rna/fastqc_trimmed/{sample}.trimmed_fastqc.zip", sample=config["samples"]),
+        mapping_summary=expand("results/rna/mapping/{sample}.summary.txt", sample=config["samples"]),
+        featurecounts=expand("results/rna/featurecounts/{sample}.counts.txt", sample=config["samples"])
+    output:
+        "results/rna/multiqc/multiqc_report.html"
+    conda:
+        "../envs/fastqc_env.yaml"
+    log: "logs/rna/multiqc.log"
+    shell:
+        "multiqc results/rna/ -o results/rna/multiqc/ > {log} 2>&1"
+
