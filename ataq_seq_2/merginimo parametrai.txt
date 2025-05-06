@@ -1,0 +1,145 @@
+Mūsų Genrich pikų vidutinis plotis – ≈ 466 bp.
+Palyginau skirtingas sujungimo ribas:
+
+tarpas (‑d)	gautų sričių skaičius
+0 bp (tik persidengiantys / besiliečiantys)	40 180
+100 bp	40 076  (‑0,26 %)
+250 bp	38 634  (‑3,8 %)
+
+100 bp tarpas (≈ 20 % piko pločio) sujungia tik 104 papildomus pikus;
+
+250 bp tarpas jau suklijuoja 1 546 sritis ir padidina „daisy‑chain“ riziką, kai arti esantys, bet biologiniu požiūriu skirtingi elementai tampa viena didele sritimi.
+
+Todėl palikau numatytą ‑d 0, nes taip išsaugoma > 99,7 % atskirų pikų ir išvengiama perteklinio sujungimo.
+
+kodel reikia fixmate:
+upport for alternative conda frontends has been deprecated in favor of simpler support and code base. This should not cause issues since current conda releases rely on fast solving via libmamba. Ignoring the alternative conda frontend setting (mamba).
+Assuming unrestricted shared filesystem usage.
+host: node-36
+Building DAG of jobs...
+Your conda installation is not configured to use strict channel priorities. This is however important for having robust and correct environments (for details, see https://conda-forge.org/docs/user/tipsandtricks.html). Please consider to configure strict priorities by executing 'conda config --set channel_priority strict'.
+Creating conda environment envs/bowtie2_env.yaml...
+Downloading and installing remote packages.
+Cleaning up conda package tarballs.
+Environment for /scratch/lustre/home/juto0336/ataq/GLIA_1/workflow/../envs/bowtie2_env.yaml created (location: .snakemake/conda/25e51e6e7223b6ec2f5ccf97e943018e_)
+Using shell: /usr/bin/bash
+Provided cores: 10
+Rules claiming more threads will be scaled down.
+Job stats:
+job                        count
+-----------------------  -------
+align                          4
+all                            1
+feature_counts                 1
+merge_and_convert_peaks        1
+multiqc                        1
+peak_calling                   4
+total                         12
+
+Select jobs to execute...
+Execute 1 jobs...
+
+[Mon May  5 22:17:37 2025]
+localrule align:
+    input: data/reference/bowtie_index/index_build.done, results/trimmed/SRX16311683_1.trimmed.fastq.gz, results/trimmed/SRX16311683_2.trimmed.fastq.gz
+    output: results/mapping/SRX16311683.bam
+    jobid: 6
+    reason: Missing output files: results/mapping/SRX16311683.bam; Code has changed since last execution
+    wildcards: sample=SRX16311683
+    threads: 8
+    resources: tmpdir=/tmp/slurm-juto0336-170203
+
+Activating conda environment: .snakemake/conda/25e51e6e7223b6ec2f5ccf97e943018e_
+Waiting for more resources.
+Select jobs to execute...
+55360373 reads; of these:
+  55360373 (100.00%) were paired; of these:
+    4089740 (7.39%) aligned concordantly 0 times
+    41450441 (74.87%) aligned concordantly exactly 1 time
+    9820192 (17.74%) aligned concordantly >1 times
+    ----
+    4089740 pairs aligned concordantly 0 times; of these:
+      20066 (0.49%) aligned discordantly 1 time
+    ----
+    4069674 pairs aligned 0 times concordantly or discordantly; of these:
+      8139348 mates make up the pairs; of these:
+        6721153 (82.58%) aligned 0 times
+        1131029 (13.90%) aligned exactly 1 time
+        287166 (3.53%) aligned >1 times
+93.93% overall alignment rate
+[bam_sort_core] merging from 3 files and 8 in-memory blocks...
+samtools markdup: error, no MC tag. Please run samtools fixmate on file first.
+
+samtools markdup: error, unable to assign pair hash key.
+
+RuleException:
+CalledProcessError in file "/scratch/lustre/home/juto0336/ataq/GLIA_1/workflow/Snakefile", line 105:
+Command 'source /scratch/lustre/home/juto0336/miniconda3/bin/activate '/scratch/lustre/home/juto0336/ataq/GLIA_1/.snakemake/conda/25e51e6e7223b6ec2f5ccf97e943018e_'; set -euo pipefail;  
+        mkdir -p results/mapping
+
+        # 1) Bowtie2 alignment  →  unsorted BAM
+        bowtie2 -p 8 -X 1000 --dovetail --very-sensitive                -x data/reference/bowtie_index/genome                -1 results/trimmed/SRX16311683_1.trimmed.fastq.gz -2 results/trimmed/SRX16311683_2.trimmed.fastq.gz         | samtools view -@ 8 -bS - > results/mapping/SRX16311683.unsorted.bam
+
+        # 2) Coordinate‑sort
+        samtools sort -@ 8                -o results/mapping/SRX16311683.sorted.bam                results/mapping/SRX16311683.unsorted.bam
+
+        # 3) Remove duplicate reads
+        samtools markdup -r -@ 8                results/mapping/SRX16311683.sorted.bam                results/mapping/SRX16311683.bam
+
+        # 4) Clean up intermediates
+        rm results/mapping/SRX16311683.unsorted.bam            results/mapping/SRX16311683.sorted.bam' returned non-zero exit status 1.
+[Mon May  5 23:38:53 2025]
+Error in rule align:
+    message: None
+    jobid: 6
+    input: data/reference/bowtie_index/index_build.done, results/trimmed/SRX16311683_1.trimmed.fastq.gz, results/trimmed/SRX16311683_2.trimmed.fastq.gz
+    output: results/mapping/SRX16311683.bam
+    conda-env: /scratch/lustre/home/juto0336/ataq/GLIA_1/.snakemake/conda/25e51e6e7223b6ec2f5ccf97e943018e_
+    shell:
+        
+        mkdir -p results/mapping
+
+        # 1) Bowtie2 alignment  →  unsorted BAM
+        bowtie2 -p 8 -X 1000 --dovetail --very-sensitive                -x data/reference/bowtie_index/genome                -1 results/trimmed/SRX16311683_1.trimmed.fastq.gz -2 results/trimmed/SRX16311683_2.trimmed.fastq.gz         | samtools view -@ 8 -bS - > results/mapping/SRX16311683.unsorted.bam
+
+        # 2) Coordinate‑sort
+        samtools sort -@ 8                -o results/mapping/SRX16311683.sorted.bam                results/mapping/SRX16311683.unsorted.bam
+
+        # 3) Remove duplicate reads
+        samtools markdup -r -@ 8                results/mapping/SRX16311683.sorted.bam                results/mapping/SRX16311683.bam
+
+        # 4) Clean up intermediates
+        rm results/mapping/SRX16311683.unsorted.bam            results/mapping/SRX16311683.sorted.bam
+        
+        (command exited with non-zero exit code)
+Removing output files of failed job align since they might be corrupted:
+results/mapping/SRX16311683.bam
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look below for error messages
+[Mon May  5 23:38:53 2025]
+Error in rule align:
+    message: None
+    jobid: 6
+    input: data/reference/bowtie_index/index_build.done, results/trimmed/SRX16311683_1.trimmed.fastq.gz, results/trimmed/SRX16311683_2.trimmed.fastq.gz
+    output: results/mapping/SRX16311683.bam
+    conda-env: /scratch/lustre/home/juto0336/ataq/GLIA_1/.snakemake/conda/25e51e6e7223b6ec2f5ccf97e943018e_
+    shell:
+        
+        mkdir -p results/mapping
+
+        # 1) Bowtie2 alignment  →  unsorted BAM
+        bowtie2 -p 8 -X 1000 --dovetail --very-sensitive                -x data/reference/bowtie_index/genome                -1 results/trimmed/SRX16311683_1.trimmed.fastq.gz -2 results/trimmed/SRX16311683_2.trimmed.fastq.gz         | samtools view -@ 8 -bS - > results/mapping/SRX16311683.unsorted.bam
+
+        # 2) Coordinate‑sort
+        samtools sort -@ 8                -o results/mapping/SRX16311683.sorted.bam                results/mapping/SRX16311683.unsorted.bam
+
+        # 3) Remove duplicate reads
+        samtools markdup -r -@ 8                results/mapping/SRX16311683.sorted.bam                results/mapping/SRX16311683.bam
+
+        # 4) Clean up intermediates
+        rm results/mapping/SRX16311683.unsorted.bam            results/mapping/SRX16311683.sorted.bam
+        
+        (command exited with non-zero exit code)
+Complete log(s): /scratch/lustre/home/juto0336/ataq/GLIA_1/.snakemake/log/2025-05-05T221628.878870.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.
