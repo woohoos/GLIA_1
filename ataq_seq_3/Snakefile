@@ -1,0 +1,343 @@
+\########################################
+
+# Define samples (for example, four libraries)
+
+\########################################
+SAMPLES = \["SRX16311682", "SRX16311683", "SRX16311690", "SRX16311691"]
+
+rule all:
+input:
+expand("results/peaks/{sample}\_peaks.narrowPeak", sample=SAMPLES),
+"data/annotation/merged\_peaks.saf",
+"results/featurecounts/all\_featureCounts.txt",
+"results/multiqc\_report.html"
+
+\########################################
+
+# Step 1: FastQC on raw reads
+
+\########################################
+rule fastqc\_raw:
+input:
+R1="data/raw/{sample}\_1.fastq.gz",
+R2="data/raw/{sample}\_2.fastq.gz"
+output:
+done="results/fastqc/{sample}\_fastqc\_raw\.done"
+conda:
+"../envs/fastqc\_env.yaml"
+shell:
+"""
+mkdir -p results/fastqc
+fastqc {input.R1} {input.R2} --outdir=results/fastqc
+touch {output.done}
+"""
+
+\########################################
+
+# Step 2: Trim adapter reads using Cutadapt
+
+\########################################
+rule trim:
+input:
+R1="data/raw/{sample}\_1.fastq.gz",
+R2="data/raw/{sample}\_2.fastq.gz"
+output:
+R1\_trim="results/trimmed/{sample}\_1.trimmed.fastq.gz",
+R2\_trim="results/trimmed/{sample}\_2.trimmed.fastq.gz",
+done="results/trimmed/{sample}\_trim.done"
+conda:
+"../envs/cutadapt\_env.yaml"
+shell:
+"""
+mkdir -p results/trimmed
+cutadapt -j 0 -m 20 -q 20&#x20;
+-o {output.R1\_trim} -p {output.R2\_trim} {input.R1} {input.R2}&#x20;
+\> results/trimmed/{wildcards.sample}\_cutadapt\_report.txt
+touch {output.done}
+"""
+
+\########################################
+
+# Step 3: FastQC on trimmed reads
+
+\########################################
+rule fastqc\_trimmed:
+input:
+R1="results/trimmed/{sample}\_1.trimmed.fastq.gz",
+R2="results/trimmed/{sample}\_2.trimmed.fastq.gz"
+output:
+done="results/fastqc\_trimmed/{sample}\_fastqc\_trimmed.done"
+conda:
+"../envs/fastqc\_env.yaml"
+shell:
+"""
+mkdir -p results/fastqc\_trimmed
+fastqc {input.R1} {input.R2} --outdir=results/fastqc\_trimmed
+touch {output.done}
+"""
+
+\########################################
+
+# Step 4: Build Bowtie2 genome index
+
+\########################################
+rule build\_bowtie2\_index:
+input:
+fasta="data/reference/reference.fasta"
+output:
+index\_files=expand("data/reference/bowtie\_index/genome.{ext}.bt2",
+ext=\["1", "2", "3", "4", "rev.1", "rev.2"]),
+done="data/reference/bowtie\_index/index\_build.done"
+threads: 4
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+mkdir -p data/reference/bowtie\_index
+bowtie2-build {input.fasta} data/reference/bowtie\_index/genome -p {threads}
+touch {output.done}
+"""
+
+\#####################################################################
+
+# Step 5a: Bowtie2 alignment to unsorted BAM
+
+\#####################################################################
+rule bowtie2\_align:
+input:
+index\_done="data/reference/bowtie\_index/index\_build.done",
+R1="results/trimmed/{sample}\_1.trimmed.fastq.gz",
+R2="results/trimmed/{sample}\_2.trimmed.fastq.gz"
+output:
+unsorted="results/mapping/{sample}.unsorted.bam"
+log:
+"results/logs/{sample}.bowtie2.log"
+threads: 8
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+mkdir -p results/mapping results/logs
+bowtie2 -p {threads} -X 1000 --dovetail --very-sensitive -x data/reference/bowtie\_index/genome&#x20;
+-1 {input.R1} -2 {input.R2} 2> {log}&#x20;
+\| samtools view -bS - > {output.unsorted}
+"""
+
+\########################################
+
+# Step 5b: Sort by name
+
+\########################################
+rule sort\_name:
+input:
+unsorted="results/mapping/{sample}.unsorted.bam"
+output:
+name\_sorted="results/mapping/{sample}.name\_sorted.bam"
+threads: 8
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+samtools sort -n -@ {threads} -o {output.name\_sorted} {input.unsorted}
+"""
+
+\########################################
+
+# Step 5c: Fix mate information
+
+\########################################
+rule fixmate:
+input:
+name\_sorted="results/mapping/{sample}.name\_sorted.bam"
+output:
+fixmate="results/mapping/{sample}.fixmate.bam"
+threads: 8
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+samtools fixmate -m -@ {threads} {input.name\_sorted} {output.fixmate}
+"""
+
+\########################################
+
+# Step 5d: Sort by coordinate
+
+\########################################
+rule sort\_coord:
+input:
+fixmate="results/mapping/{sample}.fixmate.bam"
+output:
+sorted="results/mapping/{sample}.sorted.bam"
+threads: 8
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+samtools sort -@ {threads} -o {output.sorted} {input.fixmate}
+"""
+
+\########################################
+
+# Step 5e: Mark duplicates and cleanup
+
+\########################################
+rule markdup:
+input:
+sorted="results/mapping/{sample}.sorted.bam"
+output:
+bam="results/mapping/{sample}.bam"
+threads: 8
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+samtools markdup -r -@ {threads} {input.sorted} {output.bam}
+rm {input.sorted} results/mapping/{wildcards.sample}.unsorted.bam&#x20;
+results/mapping/{wildcards.sample}.name\_sorted.bam&#x20;
+results/mapping/{wildcards.sample}.fixmate.bam
+"""
+
+\########################################
+
+# Step 6: Peak Calling with Genrich
+
+\########################################
+rule peak\_calling:
+input:
+bam       = "results/mapping/{sample}.bam",
+blacklist = "data/reference/blacklist/mm39.blacklist.bed"
+output:
+peaks = "results/peaks/{sample}\_peaks.narrowPeak"
+threads: 8
+conda:
+"../envs/genrich\_env.yaml"
+shell:
+"""
+mkdir -p results/peaks
+
+```
+    # 1) Re-sort by query name for Genrich
+    samtools sort -n -@ {threads} \
+           -o results/mapping/{wildcards.sample}.qnamesorted.bam \
+           {input.bam}
+
+    # 2) Run Genrich
+    Genrich -t results/mapping/{wildcards.sample}.qnamesorted.bam \
+            -E {input.blacklist} \
+            -o {output.peaks} -j -y -v
+
+    # 3) tidy up
+    rm results/mapping/{wildcards.sample}.qnamesorted.bam
+    """
+```
+
+\########################################
+
+# Step 7: Merge individual peak files and convert to SAF format
+
+\########################################
+rule merge\_and\_convert\_peaks:
+input:
+peaks=expand("results/peaks/{sample}*peaks.narrowPeak", sample=SAMPLES)
+output:
+saf="data/annotation/merged\_peaks.saf"
+conda:
+"../envs/bedtools\_env.yaml"
+shell:
+"""
+mkdir -p data/annotation
+cat {input.peaks} | sort -k1,1 -k2,2n | bedtools merge -i - > data/annotation/merged\_peaks.bed
+awk 'BEGIN{OFS="\t"; print "GeneID","Chr","Start","End","Strand"} {print "peak*"NR, \$1, \$2+1, \$3, "."}' data/annotation/merged\_peaks.bed > {output.saf}
+"""
+
+\########################################
+
+# Step 8: Feature Counting with featureCounts
+
+\########################################
+rule feature\_counts:
+input:
+bams=expand("results/mapping/{sample}.bam", sample=SAMPLES),
+annotation="data/annotation/merged\_peaks.saf"
+output:
+counts="results/featurecounts/all\_featureCounts.txt"
+threads: 4
+conda:
+"../envs/featurecounts\_env.yaml"
+shell:
+"""
+mkdir -p results/featurecounts
+featureCounts -T {threads} -p -a {input.annotation} -F SAF -o {output.counts} {input.bams}
+"""
+
+\########################################
+
+# Step 9a: samtools flagstat
+
+\########################################
+rule bam\_flagstat:
+input:
+bam="results/mapping/{sample}.bam"
+output:
+flagstat="results/mapping/{sample}.flagstat"
+threads: 1
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+samtools flagstat {input.bam} > {output.flagstat}
+"""
+
+\########################################
+
+# Step 9b: samtools stats
+
+\########################################
+rule bam\_stats:
+input:
+bam="results/mapping/{sample}.bam"
+output:
+stats="results/mapping/{sample}.stats"
+threads: 1
+conda:
+"../envs/bowtie2\_env.yaml"
+shell:
+"""
+samtools stats {input.bam} > {output.stats}
+"""
+
+\########################################
+
+# Step 10: MultiQC report for all QC outputs
+
+\########################################
+rule multiqc:
+input:
+fastqc\_raw    = expand("results/fastqc/{sample}\_fastqc\_raw\.done", sample=SAMPLES),
+fastqc\_trim   = expand("results/fastqc\_trimmed/{sample}\_fastqc\_trimmed.done", sample=SAMPLES),
+trim\_done     = expand("results/trimmed/{sample}\_trim.done", sample=SAMPLES),
+mapping\_bam   = expand("results/mapping/{sample}.bam", sample=SAMPLES),
+flagstats     = expand("results/mapping/{sample}.flagstat", sample=SAMPLES),
+stats         = expand("results/mapping/{sample}.stats", sample=SAMPLES),
+bowtie\_logs   = expand("results/logs/{sample}.bowtie2.log", sample=SAMPLES),
+peaks         = expand("results/peaks/{sample}\_peaks.narrowPeak", sample=SAMPLES),
+featurecounts = "results/featurecounts/all\_featureCounts.txt"
+output:
+report="results/multiqc\_report.html"
+conda:
+"../envs/multiqc\_env.yaml"
+shell:
+"""
+mkdir -p results/multiqc
+multiqc&#x20;
+results/fastqc&#x20;
+results/fastqc\_trimmed&#x20;
+results/trimmed&#x20;
+results/mapping&#x20;
+results/logs&#x20;
+results/peaks&#x20;
+results/featurecounts&#x20;
+-o results/multiqc
+mv results/multiqc/multiqc\_report.html {output.report}
+"""
