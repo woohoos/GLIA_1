@@ -1,0 +1,15 @@
+Status	results/mapping/SRX16311682.bam	results/mapping/SRX16311683.bam	results/mapping/SRX16311690.bam	results/mapping/SRX16311691.bam
+Assigned	14030657	16223342	17968204	18090208
+Unassigned_Unmapped	8485217	7700638	6721153	7002915
+Unassigned_Read_Type	0	0	0	0
+Unassigned_Singleton	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0
+Unassigned_Chimera	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0
+Unassigned_Duplicate	0	0	0	0
+Unassigned_MultiMapping	0	0	0	0
+Unassigned_Secondary	0	0	0	0
+Unassigned_NonSplit	0	0	0	0
+Unassigned_NoFeatures	80606407	77201322	72117364	71799519
+Unassigned_Overlapping_Length	0	0	0	0
+Unassigned_Ambiguity	27	31	42	37
