@@ -1,0 +1,17 @@
+samples:
+  - SRR20281755
+  - SRR20281764
+  - SRR20281765
+  - SRR20281802
+  - SRR20281803
+  - SRR20281804
+
+reference:
+  fasta:             "data/reference/reference.fasta"
+  gtf:               "data/reference/reference.gtf"
+  hisat2_index_base: "data/reference/hisat2_index/genome"
+  
+
+
+
+
